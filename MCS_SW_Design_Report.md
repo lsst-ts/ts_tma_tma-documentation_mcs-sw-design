@@ -490,4 +490,322 @@ endlegend
 @enduml
 ```
 
-#### CAR Implementation TODO:
+#### CAR Implementation
+
+Each subsystem subscribes itself to the command reception task, when this is done the commands allowed for that subsystem
+are specified. This way when a command is received the command reception task knows to which subsystem is directed. Once
+the commanded subsystem is defined by the command reception task, the appropriate trigger is sent to the subsystem. This
+is done using dynamic dispatch, having one parent class with the method trigger statechart and one child for each subsystem
+with the specific actions for each subsystem. These actions consist on triggering the state machine of the subsystem by defining the
+corresponding trigger for the received command and adding it to the queue from the state machine task. In subsystems with
+multiple instances of the state machine, the command receptor decides which one is triggered based on the first parameter
+from the command, that acts as an index value for the initialized instances array.
+
+Once the state machine is triggered, the actions coded for the received command are executed. First, the command is
+evaluated to see if the requested action can be executed. For doing this the command and its parameters are evaluated.
+If the command is evaluated positively an ACK is sent and the command is executed.
+If the command is evaluated negatively a REJECTED is sent and the command is not executed.
+When a command is accepted, the actions defined for that command are executed and then the corresponding response is sent when
+done.
+If these actions are completed correctly a SUCCEEDED is sent.
+If these actions are not completed or are completed with errors, a FAILED is sent with a brief explanation of what happened.
+If these actions are interrupted by another command, a STOP command for example, a SUPERSEDED is sent specifying which
+command caused this response.
+
+All the command and responses mentioned above are sent from/to the MtMountOperationManager through TCP/IP, where the PXI
+acts as a server and the MtMountOperationManager acts as a client. That's why the MtMountOperationManager has two
+connections open at any time, to connect to the two PXIs it has to send commands to and receive the responses from each
+of them.
+
+In addition to the commands and responses, there are events sent from the PXI to the MtMountOperationManager that inform
+of the status of the system. These events are sent to the commanders connected to the MtMountOperationManager:
+EUI, HHD or CSC. These events are defined in the [PXI documentation repo](https://gitlab.tekniker.es/publico/3151-lsst/documentation/pxicontroller_documentation)
+inside the `CommandsAndEventsManagement` directory `04 Events.md`, from this list the most relevant ones are two:
+
+- Warning event. This event informs of an unusual situation but that allows operations to keep going. This event contains
+  the following information:
+  - Name of the warning.
+  - An identifier for the subsystem where the event ocurred.
+  - The name of the subsystem instance where the event ocurred.
+  - Boolean value of the event status, active or not.
+  - Warning code, identifying code number of the warning.
+  - Description of the warning.
+
+- Alarm event. This event informs of a bad situation that does not allow operations to keep going. This event contains
+  the following information:
+  - Name of the alarm.
+  - An identifier for the subsystem where the event ocurred.
+  - The name of the subsystem instance where the event ocurred.
+  - Boolean value of the event status, active or not.
+  - Boolean value of the latched status, latched or not.
+  - Alarm code, identifying code number of the alarm.
+  - Description of the alarm.
+
+The following diagrams represent the steps for sending a command to a subsystem.
+
+- Accepted and **SUCEEDED** command.
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Subsystem State Machine" as subsystem
+
+  activate commander
+  commander -> MtMountOperationManager: high level command
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  subsystem -> MtMountOperationManager: SUCCEEDED
+  deactivate subsystem
+  MtMountOperationManager -> commander: SUCCEEDED
+  deactivate MtMountOperationManager
+  deactivate commander
+  @enduml
+  ```
+
+- Accepted and **FAILED** command.
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Subsystem State Machine" as subsystem
+
+  activate commander
+  commander -> MtMountOperationManager: high level command
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  subsystem -> MtMountOperationManager: FAILED
+  deactivate subsystem
+  MtMountOperationManager -> commander: FAILED
+  deactivate MtMountOperationManager
+  deactivate commander
+  @enduml
+  ```
+
+- Accepted and **SUPERSEDED** command.
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Subsystem State Machine" as subsystem
+
+  activate commander
+  activate MtMountOperationManager
+  commander -> MtMountOperationManager: high level command
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  commander -> MtMountOperationManager: high level command
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  subsystem -> MtMountOperationManager: SUPERSEDED
+  MtMountOperationManager -> commander: SUPERSEDED
+  subsystem -> MtMountOperationManager: SUCCEEDED
+  MtMountOperationManager -> commander: SUCCEEDED
+  deactivate commander
+  @enduml
+  ```
+
+- **REJECTED** command.
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Subsystem State Machine" as subsystem
+
+  activate commander
+  commander -> MtMountOperationManager: high level command
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> MtMountOperationManager: REJECTED
+  deactivate subsystem
+  MtMountOperationManager -> commander: REJECTED
+  deactivate MtMountOperationManager
+  deactivate commander
+  @enduml
+  ```
+
+- Commands for a subsystem that is contained in another (ACW is commanded by Azimuth and Encoder is commanded by Azimuth
+  and Elevation).
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Parent Subsystem State Machine" as subsystem
+  participant "Subsystem State Machine (ACW, Encoder)" as slaveSubsystem
+
+  group Accepted and SUCCEEDED
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> slaveSubsystem: subsystem command
+  activate slaveSubsystem
+  slaveSubsystem -> subsystem: ACK
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  slaveSubsystem -> subsystem: SUCCEEDED
+  deactivate slaveSubsystem
+  subsystem -> MtMountOperationManager: SUCCEEDED
+  deactivate subsystem
+  MtMountOperationManager -> commander: SUCCEEDED
+  deactivate MtMountOperationManager
+  deactivate commander
+  end
+
+  group Accepted and FAILED
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> slaveSubsystem: subsystem command
+  activate slaveSubsystem
+  slaveSubsystem -> subsystem: ACK
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  slaveSubsystem -> subsystem: FAILED
+  deactivate slaveSubsystem
+  subsystem -> MtMountOperationManager: FAILED
+  deactivate subsystem
+  MtMountOperationManager -> commander: FAILED
+  deactivate MtMountOperationManager
+  deactivate commander
+  end
+
+  group Accepted and SUPERSEDED
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> slaveSubsystem: subsystem command
+  activate slaveSubsystem
+  slaveSubsystem -> subsystem: ACK
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  commander -> MtMountOperationManager: high level command
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  subsystem -> slaveSubsystem: subsystem command
+  slaveSubsystem -> subsystem: ACK
+  subsystem -> MtMountOperationManager: ACK
+  MtMountOperationManager -> commander: ACK
+  slaveSubsystem -> subsystem: SUPERSEDED
+  deactivate slaveSubsystem
+  subsystem -> MtMountOperationManager: SUPERSEDED
+  deactivate subsystem
+  MtMountOperationManager -> commander: SUPERSEDED
+  deactivate MtMountOperationManager
+  deactivate commander
+  end
+
+  group REJECTED
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  MtMountOperationManager -> commandReceptor: subsystem command
+  activate commandReceptor
+  commandReceptor -> subsystem: subsystem command
+  deactivate commandReceptor
+  activate subsystem
+  subsystem -> slaveSubsystem: subsystem command
+  activate slaveSubsystem
+  slaveSubsystem -> subsystem: REJECTED
+  deactivate slaveSubsystem
+  subsystem -> MtMountOperationManager: REJECTED
+  deactivate subsystem
+  MtMountOperationManager -> commander: REJECTED
+  deactivate MtMountOperationManager
+  deactivate commander
+  end
+  @enduml
+  ```
+
+Monitoring task for warning and alarm events.
+
+```plantuml
+@startuml
+participant "Commander\nEUI/HHD/CSC" as commander
+participant MtMountOperationManager
+participant "Subsystem State Machine" as subsystem
+participant "Subsystem Monitoring task" as monitoring
+
+group alarm
+monitoring -> subsystem ++: trigger alarm ocurred (active)
+subsystem -> MtMountOperationManager ++: alarm event (active and latched)
+MtMountOperationManager -> commander --: alarm event (active and latched)
+monitoring -> subsystem: trigger alarm ocurred (inactive)
+subsystem -> MtMountOperationManager ++: alarm event (inactive and latched)
+MtMountOperationManager -> commander --: alarm event (inactive and latched)
+commander -> MtMountOperationManager ++: reset command
+MtMountOperationManager -> subsystem: reset command
+subsystem -> MtMountOperationManager: ACK
+MtMountOperationManager -> commander: ACK
+subsystem -> MtMountOperationManager: alarm event (inactive and not latched)
+MtMountOperationManager -> commander: alarm event (inactive and not latched)
+subsystem -> MtMountOperationManager: SUCCEEDED
+deactivate subsystem
+MtMountOperationManager -> commander: SUCCEEDED
+deactivate MtMountOperationManager
+end
+
+group warning
+monitoring -> subsystem ++: trigger warning ocurred (active)
+subsystem -> MtMountOperationManager ++: warning event (active)
+MtMountOperationManager -> commander --: warning event (active)
+monitoring -> subsystem: trigger warning ocurred (inactive)
+subsystem -> MtMountOperationManager ++: warning event (inactive)
+deactivate subsystem
+MtMountOperationManager -> commander --: warning event (inactive)
+end
+
+@enduml
+```
+
+TODO:

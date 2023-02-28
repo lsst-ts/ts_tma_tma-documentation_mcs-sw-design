@@ -40,7 +40,7 @@ The TMA can be functionally divided into the following subsystems:
 - **Cabinet thermal control system**. The cabinet thermal control system must control the surface temperature of the
   electrical cabinets while maintaining the internal temperature inside the operation range of the contained equipment.
 - **Locking pins system**. The two actuators, there are two for redundancy, are for locking the elevation axis into the
-  parking positions: zenit or horizon.
+  parking positions: zenith or horizon.
 - **Main Power Supply system**. This is the power supply for the main drives uses to move Azimuth and Elevation axes.
 - **OSS**. This is the Oil Supply System, responsible of keeping the telescope floating on an oil film to reduce friction.
 - **Azimuth Cable Wrap system**. Is commanded in position by the azimuth axis, to make the wires follow the movements of
@@ -92,14 +92,14 @@ component CSC [
 
 node "Mount Control Computer (MCC)" {
   component EUI [
-  Engeneering User Interface (EUI, LabVIEW)]
+  Engineering User Interface (EUI, LabVIEW)]
   component Cpp [
   MtMount Operation Manager (C++)]
 }
 
 node "Hand Held Device (HHD)" {
   component HHD [
-  Engeneering User Interface (HHD, LabVIEW)]
+  Engineering User Interface (HHD, LabVIEW)]
 }
 
 node TMA_PXI [
@@ -232,7 +232,7 @@ The main functions of the programs running in the MCC are:
 The MtMount Operation management task manages the commands (received either from the EUI, HHD or CSC) and processes the
 responses received from the PXIs as shown in the diagram from the [SW Structure section](#sw-structure). There are three
 High Level Asynchronous command reception tasks, one for attending the commands requested by the operator through the EUI
-(button pressing, etc), another equivalen for HHD, and a last one for receiving the commands from the CSC. And two Low
+(button pressing, etc), another equivalent for HHD, and a last one for receiving the commands from the CSC. And two Low
 Level Asynchronous response reception tasks for received the responses for the two PXIs commanded by the operation manager.
 
 The EUI functions are to implement the Engineering user interface, store the telemetry data locally and send the telemetry
@@ -543,7 +543,7 @@ inside the `CommandsAndEventsManagement` directory `04 Events.md`, from this lis
 
 The following diagrams represent the steps for sending a command to a subsystem.
 
-- Accepted and **SUCEEDED** command.
+- Accepted and **SUCCEEDED** command.
 
   ```plantuml
   @startuml

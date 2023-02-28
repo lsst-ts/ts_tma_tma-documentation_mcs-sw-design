@@ -365,28 +365,26 @@ node "Mount Control computer" as mcc {
 
 node "TMA-PXI" as tmaPxi {
   component "HL Asynchronous command reception task" as tmaReceptor
-  component Azimuth {
-    component "Azimuth Cable Wrap" as acw
-    component "Encoder system interface AZ"
+  component "Azimuth\nState Machine & Monitoring Loop" as Azimuth {
+    component "Azimuth Cable Wrap\nState Machine & Monitoring Loop" as acw
   }
-  component Elevation {
-    component "Encoder system interface EL"
-  }
-  component "Locking Pins" as lp
-  component "Mirror Cover" as mc
-  component "Balancing" as bal
-  component "Deployable Platforms" as dp
-  component "Camera Cable Wrap" as ccw
+  component "Elevation\nState Machine & Monitoring Loop" as Elevation
+  component "Encoder\nState Machine & Monitoring Loop" as encoder
+  component "Locking Pins\nState Machine & Monitoring Loop" as lp
+  component "Mirror Cover\nState Machine & Monitoring Loop" as mc
+  component "Balancing\nState Machine & Monitoring Loop" as bal
+  component "Deployable Platforms\nState Machine & Monitoring Loop" as dp
+  component "Camera Cable Wrap\nState Machine & Monitoring Loop" as ccw
   component "TMA IS Interface" as safety
 }
 
 node "AUX-PXI" as auxPxi {
   component "HL Asynchronous command reception task" as auxReceptor
-  component "Cabinet Thermal control" as cabinet
-  component "Drives thermal control" as thermalDrives
-  component TEC
-  component OSS
-  component "Main Power Supply" as mps
+  component "Cabinet Thermal control\nState Machine & Monitoring Loop" as cabinet
+  component "Drives thermal control\nState Machine & Monitoring Loop" as thermalDrives
+  component "TEC\nState Machine & Monitoring Loop" as TEC
+  component "OSS\nState Machine & Monitoring Loop" as OSS
+  component "Main Power Supply\nState Machine & Monitoring Loop" as mps
 }
 
 node "AXES-PXI" as axesPxi {
@@ -398,48 +396,96 @@ node "AXES-PXI" as axesPxi {
   component "Elevation trajectory generation" as elTraject
 }
 
-cpp -d---> tmaReceptor
-cpp -d---> auxReceptor
+node DrivesEtherCAT
+node BoschController
+node "TMA IS" as pilz
+node "IOs and Power Supply EtherCAT" as IOsEtherCAT
+node "TEC Controller" as TECdevice
+node "Oil Supply System" as OSSdevice
+node "Modbus Cabinet Controller" as modbusController
 
-tmaReceptor -d--> Azimuth
-tmaReceptor -d--> Elevation
-tmaReceptor -d--> lp
-tmaReceptor -d--> mc
-tmaReceptor -d--> bal
-tmaReceptor -d--> dp
-tmaReceptor -d--> ccw
-tmaReceptor -d--> safety
+cpp -[bold,#blue]----> tmaReceptor
+cpp -[bold,#blue]----> auxReceptor
 
-auxReceptor -d--> cabinet
-auxReceptor -d--> thermalDrives
-auxReceptor -d--> TEC
-auxReceptor -d--> OSS
-auxReceptor -d--> mps
+encoder    <-[bold,#green]---> Azimuth
+encoder    <-[bold,#green]---> Elevation
 
-Azimuth -d-> axesReceptor
-Elevation -d-> axesReceptor
+tmaReceptor -[bold,#blue]----> Azimuth
+tmaReceptor -[bold,#blue]----> Elevation
+tmaReceptor -[bold,#blue]----> lp
+tmaReceptor -[bold,#blue]----> mc
+tmaReceptor -[bold,#blue]----> bal
+tmaReceptor -[bold,#blue]----> dp
+tmaReceptor -[bold,#blue]----> ccw
+tmaReceptor -[bold,#blue]----> safety
 
-axesReceptor -d-> azInter
-axesReceptor -d-> elInter
-axesReceptor -d-> udp
-axesReceptor -d-> azTraject
-axesReceptor -d-> elTraject
+auxReceptor -[bold,#blue]---> cabinet
+auxReceptor -[bold,#blue]---> thermalDrives
+auxReceptor -[bold,#blue]---> TEC
+auxReceptor -[bold,#blue]---> OSS
+auxReceptor -[bold,#blue]---> mps
 
-thermalDrives -u---> cpp
-Azimuth -u---> cpp
-Elevation -u---> cpp
-lp -u---> cpp
-mc -u---> cpp
-bal -u---> cpp
-dp -u---> cpp
-ccw -u---> cpp
-safety -u---> cpp
-cabinet -u---> cpp
-TEC -u---> cpp
-OSS -u---> cpp
-mps -u---> cpp
+Azimuth   -[bold,#blue]----> axesReceptor
+Elevation -[bold,#blue]----> axesReceptor
 
-TODO:
+axesReceptor -[bold,#blue]---> azInter
+axesReceptor -[bold,#blue]---> elInter
+axesReceptor -[bold,#blue]-> udp
+
+azInter <-[bold,#green]-> azTraject
+elInter <-[bold,#green]-> elTraject
+
+thermalDrives -[bold,#red]----> cpp
+Azimuth       -[bold,#red]----> cpp
+Elevation     -[bold,#red]----> cpp
+lp            -[bold,#red]----> cpp
+mc            -[bold,#red]----> cpp
+bal           -[bold,#red]----> cpp
+dp            -[bold,#red]----> cpp
+ccw           -[bold,#red]----> cpp
+safety        -[bold,#red]----> cpp
+cabinet       -[bold,#red]----> cpp
+TEC           -[bold,#red]----> cpp
+OSS           -[bold,#red]----> cpp
+mps           -[bold,#red]----> cpp
+
+udp -[bold,#grey]--> azInter
+udp -[bold,#grey]--> elInter
+
+udp -[bold,#red]-> encoder
+
+azInter -[bold,#red]--> Azimuth
+elInter -[bold,#red]--> Elevation
+
+encoder -[bold,#blue]-> axesReceptor
+
+DrivesEtherCAT <-[bold,#grey]--> azInter
+DrivesEtherCAT <-[bold,#grey]--> elInter
+
+BoschController <-[bold,#grey]--> dp
+BoschController <-[bold,#grey]--> lp
+BoschController <-[bold,#grey]--> bal
+BoschController <-[bold,#grey]--> mc
+BoschController <-[bold,#grey]--> ccw
+BoschController <-[bold,#grey]--> acw
+
+pilz <-[bold,#grey]--> safety
+
+IOsEtherCAT <-[bold,#grey]-> thermalDrives
+IOsEtherCAT <-[bold,#grey]-> mps
+
+TECdevice <-[bold,#grey]---> TEC
+OSSdevice <-[bold,#grey]---> OSS
+
+modbusController <-[bold,#grey]---> cabinet
+
+legend right
+  | **Color** | **Type** |
+  | <#blue>   | commands |
+  | <#red>    | responses |
+  | <#grey>   | data |
+  | <#green>  | commands and responses |
+endlegend
 
 @enduml
 ```

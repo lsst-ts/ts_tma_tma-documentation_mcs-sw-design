@@ -180,9 +180,7 @@ programs at each level:
   the higher level program(s) or from the operator. Whenever a command is received, an event (thread synchronization event)
   is set for the state machine task. Typical objects used in multithreaded applications (like mutexes) are
   used to share the data structure associated to the command with the state machine task. One task of this kind
-  is required for each program at the higher level because blocking functions may be used for reading 
-  
-
+  is required for each program at the higher level because blocking functions may be used for reading.
 - State machine task. This task is an active object (event dispatcher and state machine manager) that processes the events
   (thread synchronization events) set by the High Level Asynchronous command reception task(s) and the Low Level Asynchronous
   message reception task(s). This task sends the commands to the lower level program(s) and the response messages

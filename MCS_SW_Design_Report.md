@@ -35,7 +35,7 @@ The TMA can be functionally divided into the following subsystems:
   closing operations. Four auxiliary actuators controlled in position have been added to block the cover in the retracted position.
 - **Deployable platforms system**. The retractable/deployable platforms are used for maintenance and can be commanded from
   the user interface.
-- **Camera cable wrap system**. The camera cable wrap system is in position and is commanded by the CSC to follow the position of
+- **Camera cable wrap system**. The camera cable wrap system is controlled in position and is commanded by the CSC to follow the position of
   the camera rotator.
 - **Cabinet thermal control system**. The cabinet thermal control system must control the surface temperature of the
   electrical cabinets while maintaining the internal temperature inside the operation range of the contained equipment.
@@ -50,7 +50,7 @@ In addition to controlling the subsystems, the MCS system is also in charge of p
 (by means of the Engineering User Interface, EUI, and the Hand-Held Device, HHD) and with the Commandable SAL Component (CSC)
 in order to receive and process the commands to be executed and monitor the TMA variables (classified in topics) and events.
 Finally, the MCS also performs the software supervisory functions required to ensure a safe operation of the TMA
-(the hardware safety functions are executed by the TMA IS). For these supervisory tasks each subsystem has an
+(the safety related functions are executed by the TMA IS). For these supervisory tasks each subsystem has an
 independent task that monitors the telemetry to trigger the configured alarms.
 
 ```plantuml
@@ -157,7 +157,7 @@ Cpp <-r-> CSC: commands & events
 @enduml
 ```
 
-As it can be appreciated in the precious diagram, the MCS SW architecture has a hierarchical design and each SW Program
+As it can be appreciated in the previous diagram, the MCS SW architecture has a hierarchical design and each SW Program
 is placed at a certain level of the hierarchy as detailed in the table below.
 
 | Level | Program | Higher Level Program | Lower Level Program |
@@ -180,7 +180,9 @@ programs at each level:
   the higher level program(s) or from the operator. Whenever a command is received, an event (thread synchronization event)
   is set for the state machine task. Typical objects used in multithreaded applications (like mutexes) are
   used to share the data structure associated to the command with the state machine task. One task of this kind
-  is required for each program at the higher level because blocking functions may be used for reading.
+  is required for each program at the higher level because blocking functions may be used for reading 
+  
+
 - State machine task. This task is an active object (event dispatcher and state machine manager) that processes the events
   (thread synchronization events) set by the High Level Asynchronous command reception task(s) and the Low Level Asynchronous
   message reception task(s). This task sends the commands to the lower level program(s) and the response messages
@@ -321,7 +323,7 @@ These devices are:
   EtherCAT line.
 - OSS control PLC. It manages the hydrostatic bearings for azimuth and elevation. The communication  be via Modbus TCP
   and it is connected to the Ethernet TMA network.
-- Drive Controllers. They control the azimuth and elevation drives and are connected by EtherCAT.
+- Main Axes motor section drives. They control the azimuth and elevation motors sections and are connected by EtherCAT.
 - Cabinet thermal local controllers. They control the surface temperature of the cabinets and allow powering on
   temperature limited hardware. The communication is done via MODBUS TCP and they are connected to the Ethernet TMA network.
 - Top End Chiller PLC. It controls the temperature of elements of the top end assembly, as well as the M2 mirror cell

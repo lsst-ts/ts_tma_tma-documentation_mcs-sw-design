@@ -776,6 +776,39 @@ The following diagrams represent the steps for sending a command to a subsystem.
   @enduml
   ```
 
+- Reject from the MtMountOperationManager, the reasons could be a late response from the PXI or not having a connection to the PXI.
+
+  ```plantuml
+  @startuml
+  participant "Commander\nEUI/HHD/CSC" as commander
+  participant MtMountOperationManager
+  participant "Command Reception task\ninside TMA or AUX PXI" as commandReceptor
+  participant "Subsystem State Machine" as subsystem
+
+  group NoConnectionAvailable
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  commander -[hidden]-> MtMountOperationManager: reduce compactness
+  MtMountOperationManager -> commander: REJECTED
+  deactivate MtMountOperationManager
+  deactivate commander
+  end
+
+  group LateACK
+  commander -> MtMountOperationManager: high level command
+  activate commander
+  activate MtMountOperationManager
+  MtMountOperationManager -> subsystem: subsystem command
+  hnote over MtMountOperationManager: Too much time without response
+  MtMountOperationManager -> commander: REJECTED
+  deactivate MtMountOperationManager
+  deactivate commander
+  MtMountOperationManager <- subsystem !!: ACK / REJECTED
+  end
+  @enduml
+  ```
+
 Monitoring task for warning and alarm events.
 
 ```plantuml

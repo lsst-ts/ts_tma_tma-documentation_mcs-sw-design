@@ -2,9 +2,9 @@
 
 | **Requested by:** | **GHESA** |
 | --- | --- |
-| **Doc. Code:** | 3151_MCS_0002 |
-| **Editor:** | Julen Garcia |
-| **Approved by:** | Ismael Ruiz de Argandoña |
+| **Doc. Code:**    | 3151_MCS_0002 |
+| **Editor:**       | Julen Garcia |
+| **Approved by:**  | Ismael Ruiz de Argandoña |
 
 ## Introduction
 

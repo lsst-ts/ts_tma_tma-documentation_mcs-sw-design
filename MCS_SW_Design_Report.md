@@ -109,6 +109,7 @@ node TMA_PXI [
   ..
   - Azimuth
   - Elevation
+  - Encoder
   - Locking pins
   - Azimuth Cable Wrap
   - Camera Cable Wrap

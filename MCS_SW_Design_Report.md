@@ -199,15 +199,20 @@ programs at each level:
 @startuml
 participant "Commander\nUser/EUI/HHD/CSC/MtMountOperationManager/PXI" as commander
 participant "HL Asynchronous command reception task" as HL
+participant "State machine" as stateMachine
 participant "LL Asynchronous response reception task" as LL
 participant "Commanded system\nMtMountOperationManager/PXI" as subsystem
 
 commander->HL: command
-HL->subsystem: command
+HL->stateMachine: command
+stateMachine->subsystem: command
+
 subsystem->LL: acceptance response (ACK or NoACK)
-LL->commander: acceptance response (ACK or NoACK)
+LL->stateMachine: acceptance response (ACK or NoACK)
+stateMachine->commander: acceptance response (ACK or NoACK)
 subsystem->LL: completion response only if command accepted (SUCCEEDED or FAILED or SUPERSEDED)
-LL->commander: completion response only if command accepted (SUCCEEDED or FAILED or SUPERSEDED)
+LL->stateMachine: completion response only if command accepted (SUCCEEDED or FAILED or SUPERSEDED)
+stateMachine->commander: completion response only if command accepted (SUCCEEDED or FAILED or SUPERSEDED)
 @enduml
 ```
 
@@ -218,13 +223,13 @@ to the CSC. The EUI has the extra functionality of logging the read variables to
 
 ### MCC SW Programs
 
-The main functions of the programs running in the MCC are:
+In the MCC there are two programs (EUI and MtMountOperationManager), the main functions of these two are:
 
-- Interface with the operator by means of the Engineering User Interface or HHD:
+- Interface with the operator by means of the Engineering User Interface (EUI):
   - Commanding. Commanding the TMA.
   - Monitoring. Display the TMA information (topics and events) received from the Subsystem control program to the
   operator and log it locally.
-- Interface with the CSC by means of the MtMount Operation Manager and EUI:
+- Interface with the CSC by means of the MtMountOperationManager and EUI:
   - Commanding. Allow commanding the TMA from the CSC, uses the MtMount Operation Manager.
   - Monitoring. Send the TMA information (topics and events) received from the Subsystem control program to the CSC.
     - Events are received from the MtMount Operation Manager.
@@ -242,7 +247,7 @@ user interface (EUI/HHD) uses the approach defined in [SW Structure section](#sw
 
 ### HHD SW Programs
 
-The main functions of the programs running in the MCC are:
+The main functions of the programs running in the HHD are:
 
 - Interface with the operator by means of the Engineering User Interface:
   - Commanding. Commanding the TMA.
@@ -609,25 +614,25 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
   activate commander
   activate MtMountOperationManager
-  commander -> MtMountOperationManager: high level command
-  MtMountOperationManager -> commandReceptor: subsystem command
+  commander -> MtMountOperationManager: high level command (1)
+  MtMountOperationManager -> commandReceptor: subsystem command (1)
   activate commandReceptor
-  commandReceptor -> subsystem: subsystem command
+  commandReceptor -> subsystem: subsystem command (1)
   deactivate commandReceptor
   activate subsystem
-  subsystem -> MtMountOperationManager: ACK
-  MtMountOperationManager -> commander: ACK
-  commander -> MtMountOperationManager: high level command
-  MtMountOperationManager -> commandReceptor: subsystem command
+  subsystem -> MtMountOperationManager: ACK (1)
+  MtMountOperationManager -> commander: ACK (1)
+  commander -> MtMountOperationManager: high level command (2)
+  MtMountOperationManager -> commandReceptor: subsystem command (2)
   activate commandReceptor
-  commandReceptor -> subsystem: subsystem command
+  commandReceptor -> subsystem: subsystem command (2)
   deactivate commandReceptor
-  subsystem -> MtMountOperationManager: ACK
-  MtMountOperationManager -> commander: ACK
-  subsystem -> MtMountOperationManager: SUPERSEDED
-  MtMountOperationManager -> commander: SUPERSEDED
-  subsystem -> MtMountOperationManager: SUCCEEDED
-  MtMountOperationManager -> commander: SUCCEEDED
+  subsystem -> MtMountOperationManager: ACK (2)
+  MtMountOperationManager -> commander: ACK (2)
+  subsystem -> MtMountOperationManager: SUPERSEDED (1)
+  MtMountOperationManager -> commander: SUPERSEDED (1)
+  subsystem -> MtMountOperationManager: SUCCEEDED (2)
+  MtMountOperationManager -> commander: SUCCEEDED (2)
   deactivate commander
   @enduml
   ```
@@ -715,33 +720,36 @@ The following diagrams represent the steps for sending a command to a subsystem.
   end
 
   group Accepted and SUPERSEDED
-  commander -> MtMountOperationManager: high level command
+  commander -> MtMountOperationManager: high level command (1)
   activate commander
   activate MtMountOperationManager
-  MtMountOperationManager -> commandReceptor: subsystem command
+  MtMountOperationManager -> commandReceptor: subsystem command (1)
   activate commandReceptor
-  commandReceptor -> subsystem: subsystem command
+  commandReceptor -> subsystem: subsystem command (1)
   deactivate commandReceptor
   activate subsystem
-  subsystem -> slaveSubsystem: subsystem command
+  subsystem -> slaveSubsystem: subsystem command (1)
   activate slaveSubsystem
-  slaveSubsystem -> subsystem: ACK
-  subsystem -> MtMountOperationManager: ACK
-  MtMountOperationManager -> commander: ACK
-  commander -> MtMountOperationManager: high level command
-  MtMountOperationManager -> commandReceptor: subsystem command
+  slaveSubsystem -> subsystem: ACK (1)
+  subsystem -> MtMountOperationManager: ACK (1)
+  MtMountOperationManager -> commander: ACK (1)
+  commander -> MtMountOperationManager: high level command (2)
+  MtMountOperationManager -> commandReceptor: subsystem command (2)
   activate commandReceptor
-  commandReceptor -> subsystem: subsystem command
+  commandReceptor -> subsystem: subsystem command (2)
   deactivate commandReceptor
-  subsystem -> slaveSubsystem: subsystem command
-  slaveSubsystem -> subsystem: ACK
-  subsystem -> MtMountOperationManager: ACK
-  MtMountOperationManager -> commander: ACK
-  slaveSubsystem -> subsystem: SUPERSEDED
+  subsystem -> slaveSubsystem: subsystem command (2)
+  slaveSubsystem -> subsystem: ACK (2)
+  subsystem -> MtMountOperationManager: ACK (2)
+  MtMountOperationManager -> commander: ACK (2)
+  slaveSubsystem -> subsystem: SUPERSEDED (1)
+  subsystem -> MtMountOperationManager: SUPERSEDED (1)
+  MtMountOperationManager -> commander: SUPERSEDED (1)
+  slaveSubsystem -> subsystem: SUCCEEDED (2)
   deactivate slaveSubsystem
-  subsystem -> MtMountOperationManager: SUPERSEDED
+  subsystem -> MtMountOperationManager: SUCCEEDED (2)
   deactivate subsystem
-  MtMountOperationManager -> commander: SUPERSEDED
+  MtMountOperationManager -> commander: SUCCEEDED (2)
   deactivate MtMountOperationManager
   deactivate commander
   end

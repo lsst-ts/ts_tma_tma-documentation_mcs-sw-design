@@ -525,7 +525,7 @@ of them.
 
 In addition to the commands and responses, there are events sent from the PXI to the MtMountOperationManager that inform
 of the status of the system. These events are sent to the commanders connected to the MtMountOperationManager:
-EUI, HHD or CSC. These events are defined in the [PXI documentation repo](https://gitlab.tekniker.es/publico/3151-lsst/documentation/pxicontroller_documentation)
+EUI, HHD or CSC. These events are defined in the [PXI documentation repo](https://github.com/lsst-ts/ts_tma_tma-documentation_pxi-controller_documentation)
 inside the `CommandsAndEventsManagement` directory `04 Events.md`, from this list the most relevant ones are two:
 
 - Warning event. This event informs of an unusual situation but that allows operations to keep going. This event contains

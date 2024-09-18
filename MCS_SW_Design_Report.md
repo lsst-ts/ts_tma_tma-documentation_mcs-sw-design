@@ -53,7 +53,7 @@ Finally, the MCS also performs the software supervisory functions required to en
 (the safety related functions are executed by the TMA IS). For these supervisory tasks each subsystem has an
 independent task that monitors the telemetry to trigger the configured alarms.
 
-```plantuml
+```{uml}
 @startuml
 component Subsystem {
 
@@ -82,7 +82,7 @@ The following section describes the SW solution designed for the MCS in order to
 The diagram below shows the SW architecture of the MCS, indicating the main SW Programs, the interfaces among them and
 the HW devices and operating systems that host each component.
 
-```plantuml
+```{uml}
 @startuml
 actor user
 
@@ -195,7 +195,7 @@ programs at each level:
   - If these messages are asynchronous events that are not relevant for the state machine task, they simply are transmitted
   to higher levels programs.
 
-```plantuml
+```{uml}
 @startuml
 participant "Commander\nUser/EUI/HHD/CSC/MtMountOperationManager/PXI" as commander
 participant "HL Asynchronous command reception task" as HL
@@ -363,7 +363,7 @@ LabVIEW Statechart Module.
 
 The following diagram shows the CAR implementation for the PXIs.
 
-```plantuml
+```{uml}
 @startuml
 node "Mount Control computer" as mcc {
   component "MtMount Operation Manager (C++)" as cpp
@@ -551,7 +551,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 - Accepted and **SUCCEEDED** command.
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -578,7 +578,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 - Accepted and **FAILED** command.
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -605,7 +605,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 - Accepted and **SUPERSEDED** command.
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -639,7 +639,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 - **REJECTED** command.
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -665,7 +665,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 - Commands for a subsystem that is contained in another (ACW is commanded by Azimuth and Encoder is commanded by Azimuth
   and Elevation).
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -778,7 +778,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 - Reject from the MtMountOperationManager, the reasons could be a late response from the PXI or not having a connection to the PXI.
 
-  ```plantuml
+  ```{uml}
   @startuml
   participant "Commander\nEUI/HHD/CSC" as commander
   participant MtMountOperationManager
@@ -811,7 +811,7 @@ The following diagrams represent the steps for sending a command to a subsystem.
 
 Monitoring task for warning and alarm events.
 
-```plantuml
+```{uml}
 @startuml
 participant "Commander\nEUI/HHD/CSC" as commander
 participant MtMountOperationManager
